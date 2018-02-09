@@ -88,6 +88,64 @@ class Yireo_NewRelic_Model_Observer
      */
     public function controllerActionPredispatch(Varien_Event_Observer $observer)
     {
+        if (!$this->_isEnabled()) {
+            return $this;
+        }
+
+        $this->_setupAppName();
+        $this->_trackControllerAction($observer->getEvent()->getControllerAction());
+
+        // Ignore Apdex for Magento Admin Panel pages
+//        if (Mage::app()->getStore()->isAdmin()) {
+//            if(function_exists('newrelic_ignore_apdex')) {
+//                newrelic_ignore_apdex();
+//            }
+//        }
+
+        // Common settings
+        if(function_exists('newrelic_capture_params')) {
+            newrelic_capture_params(true);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Method to setup the app-name
+     *
+     * @return $this
+     */
+    protected function _setupAppName() 
+    {
+        $helper = $this->_getHelper();
+        $appname = trim($helper->getAppName());
+        $license = trim($helper->getLicense());
+        $xmit = $helper->isUseXmit();
+
+        if (!empty($appname) && function_exists('newrelic_set_appname')) {
+            newrelic_set_appname($appname, $license, $xmit);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Method to track the controller-action
+     *
+     * @param Mage_Core_Controller_Front_Action $action
+     * @return $this
+     */
+    protected function _trackControllerAction($action) 
+    {
+        if (!$this->_getHelper()->isTrackController()) {
+            return $this;
+        }
+
+        $actionName = $action->getFullActionName('/');
+        if (function_exists('newrelic_name_transaction')) {
+            newrelic_name_transaction($actionName);
+        }
+
         return $this;
     }
 
