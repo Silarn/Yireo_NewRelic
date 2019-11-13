@@ -32,9 +32,13 @@ class Yireo_NewRelic_Model_Observer_Adminhtml_Process_MassReindex extends Yireo_
             try {
                 $indexer = Mage::getSingleton('index/indexer');
                 foreach ($processIds as $processId) {
-                    $process = $indexer->getProcessById($processId);
-                    $indexerCode = $process->getIndexerCode();
-                    newrelic_custom_metric('Magento/Event/reindex:' . $indexerCode, (float)1.0);
+                    if ($processId) {
+                        $process = $indexer->getProcessById($processId);
+                        if ($process) {
+                            $indexerCode = $process->getIndexerCode();
+                            newrelic_custom_metric('Magento/Event/reindex:' . $indexerCode, (float)1.0);
+                        }
+                    }
                 }
 
             } catch (Exception $e) {
